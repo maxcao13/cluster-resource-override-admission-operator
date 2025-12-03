@@ -1,7 +1,7 @@
 ---
 description: Automate OpenShift release version bumps and dependency updates
 argument-hint: <new_version> [new_go_version] [new_k8s_version] [dry_run]
-allowed-tools: Read, Edit, Glob, Grep, Bash(skopeo inspect:*), Bash(skopeo list-tags:*), Bash(SKIP_BUILD=true ./hack/generate-bundle.sh:*), Bash(go get:*), Bash(./hack/update-vendor.sh:*), Bash(go mod tidy:*), Bash(go mod vendor:*), Bash(git checkout:*), Bash(git add:*), Bash(git commit:*), Bash(git show:*), Bash(sed:*)
+allowed-tools: Read, Edit, Glob, Grep, Bash(skopeo inspect:*), Bash(skopeo list-tags:*), Bash(SKIP_BUILD=true ./hack/generate-bundle.sh:*), Bash(go get:*), Bash(go list:*), Bash(./hack/update-vendor.sh:*), Bash(go mod tidy:*), Bash(go mod vendor:*), Bash(git checkout:*), Bash(git add:*), Bash(git commit:*), Bash(git show:*), Bash(sed:*)
 ---
 
 # OpenShift Release Chores Automation
@@ -37,7 +37,7 @@ Arguments are positional (use empty strings `""` to skip optional parameters):
 
 ## Your Task
 
-Execute the following steps to perform the release chores for OpenShift vers ion **$1**:
+Execute the following steps to perform the release chores for OpenShift version **$1**:
 
 ### Step 1: Pre-flight Checks
 
@@ -55,7 +55,7 @@ Execute the following steps to perform the release chores for OpenShift vers ion
 
 3. Verify environment:
    - Check that `@manifests/clusterresourceoverride-operator.package.yaml` exists (confirms correct repository)
-   - Check for uncommitted changes with !`git status` and warn user if any exist
+   - Check for uncommitted changes with `git status` and warn user if any exist
    - If uncommitted changes exist, **STOP** and ask user to:
      1. Commit or stash existing changes first
      2. Or explicitly approve continuing (changes will be included in the update commit)
@@ -112,7 +112,7 @@ For versions not provided by user, auto-detect the increments:
 
 3. **UBI version**:
    - Get the latest UBI9 minimal version from the registry
-   - Command: !`skopeo list-tags docker://registry.access.redhat.com/ubi9/ubi-minimal 2>&1 | jq -r '.Tags[]' | grep -E '^9\.[0-9]+$' | sort -V | tail -1`
+   - Command: `skopeo list-tags docker://registry.access.redhat.com/ubi9/ubi-minimal 2>&1 | jq -r '.Tags[]' | grep -E '^9\.[0-9]+$' | sort -V | tail -1`
    - This returns the latest minor version tag (e.g., `9.7`)
    - **Note**: UBI images are versioned along RHEL minor versions. There are no backports - you must adopt the latest to consume CVE fixes.
    - If skopeo or jq fails (not installed, auth error, network issue):
@@ -136,17 +136,17 @@ Try to verify each image using `skopeo inspect`. If skopeo fails for any reason 
 
 1. **UBI Minimal Image**:
    - Image: `registry.access.redhat.com/ubi9/ubi-minimal:$NEW_UBI_VERSION`
-   - Command: !`skopeo inspect docker://registry.access.redhat.com/ubi9/ubi-minimal:$NEW_UBI_VERSION --no-tags 2>&1`
+   - Command: `skopeo inspect docker://registry.access.redhat.com/ubi9/ubi-minimal:$NEW_UBI_VERSION --no-tags 2>&1`
    - Mark status: ✓ if success, * if auth/network/skopeo-not-found error, ✗ if 404/not found
 
 2. **Operator Registry Builder Image**:
    - Image: `quay.io/operator-framework/upstream-registry-builder:$NEW_OPERATOR_VERSION`
-   - Command: !`skopeo inspect docker://quay.io/operator-framework/upstream-registry-builder:$NEW_OPERATOR_VERSION --no-tags 2>&1`
+   - Command: `skopeo inspect docker://quay.io/operator-framework/upstream-registry-builder:$NEW_OPERATOR_VERSION --no-tags 2>&1`
    - Mark status: ✓ if success, * if auth/network/skopeo-not-found error, ✗ if 404/not found
 
 3. **Golang Builder Images**:
    - Image: `registry.ci.openshift.org/ocp/builder:rhel-9-golang-$NEW_GO_VERSION-openshift-$NEW_VERSION`
-   - Command: !`skopeo inspect docker://registry.ci.openshift.org/ocp/builder:rhel-9-golang-$NEW_GO_VERSION-openshift-$NEW_VERSION --no-tags 2>&1`
+   - Command: `skopeo inspect docker://registry.ci.openshift.org/ocp/builder:rhel-9-golang-$NEW_GO_VERSION-openshift-$NEW_VERSION --no-tags 2>&1`
    - Mark status: ✓ if success, * if auth/network/skopeo-not-found error, ✗ if 404/not found
 
 **Error Handling**:
